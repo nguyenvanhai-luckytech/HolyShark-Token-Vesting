@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 import "./core/TokenBase.sol";
-import "./core/PublicSaleRounds.sol";
 
 contract HLS is TokenBase {
     constructor(address multiSigAccount) TokenBase(multiSigAccount, "HLS", "HLS") {}
