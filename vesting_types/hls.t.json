@@ -49,7 +49,7 @@
         "daysPerRound": 30,
         "cliff": 0,
         "daysPerCliff": 30,
-        "arbitrary": false
+        "arbitrary": true
     },
     {
         "name": "Foundation Reserve",
@@ -62,7 +62,7 @@
         "daysPerRound": 30,
         "cliff": 0,
         "daysPerCliff": 30,
-        "arbitrary": false
+        "arbitrary": true
     },
     {
         "name": "Liquid pool & Cex Listing",
@@ -75,7 +75,7 @@
         "daysPerRound": 30,
         "cliff": 0,
         "daysPerCliff": 30,
-        "arbitrary": false
+        "arbitrary": true
     },
     {
         "name": "Team",

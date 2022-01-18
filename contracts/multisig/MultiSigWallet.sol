@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
+import "hardhat/console.sol";
+
 pragma solidity 0.8.9;
 
 contract MultiSigWallet {
@@ -128,7 +130,7 @@ contract MultiSigWallet {
         (bool success, ) = transaction.to.call{value: transaction.value}(
             transaction.data
         );
-
+        console.log("hihi", success);
         require(success, "tx failed");
 
         emit ExecuteTransaction(msg.sender, _txIndex);
