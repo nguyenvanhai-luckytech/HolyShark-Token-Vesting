@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.9;
 
 import "../eip20/BEP20.sol";
@@ -5,6 +6,8 @@ import "../utils/AccessControl.sol";
 import "../utils/ReentrancyGuard.sol";
 import "../utils/SafeMath.sol";
 import "../eip20/SafeBEP20.sol";
+
+import "hardhat/console.sol";
 
 contract PublicSaleRounds is BEP20, AccessControl, ReentrancyGuard {
     using SafeBEP20 for BEP20;
@@ -48,10 +51,6 @@ contract PublicSaleRounds is BEP20, AccessControl, ReentrancyGuard {
         _vestingTypes.startTimeVesting = startTimeVesting;
     }
 
-    function addStartTimeVesting (uint256 startTimeVesting) public onlyAdmin {
-        _vestingTypes.startTimeVesting = startTimeVesting;
-    }
-
     function addVestingToken(
         address beneficiary,
         uint256 amount
@@ -62,37 +61,29 @@ contract PublicSaleRounds is BEP20, AccessControl, ReentrancyGuard {
 
         uint256 tgeClaimed = 0;
 
-        uint256 round1 = _vestingTypes.startTimeVesting.add(31 days);
-        uint256 round2 = _vestingTypes.startTimeVesting.add(62 days);
-
         if (_vestingTypes.tgePercent > 0 ) {
-            if( _vestingTypes.startTimeVesting >= round1 && _vestingTypes.startTimeVesting <= round2) {
-                tgeClaimed = (amount * _vestingTypes.tgePercent) / 10**18;
-            } 
-            else if (_vestingTypes.startTimeVesting >= round2) {
-                tgeClaimed = (amount * (_vestingTypes.tgePercent.div(2))) / 10**18;
-            }
-
-            tgeClaimed = (amount * _vestingTypes.tgePercent) / 10**18;
+            tgeClaimed = (amount * _vestingTypes.tgePercent);
         }
 
         if (tgeClaimed > 0 ) {
             _mint(beneficiary, tgeClaimed);
-            _vestingTypes.allocation = _vestingTypes.allocation - tgeClaimed;
         }
+        _vestingTypes.allocation = _vestingTypes.allocation - tgeClaimed;
     }
 
-    function revokeVestingToken(address user, uint256 vestingType) external onlyAdmin {
+    function revokeVestingToken(address user) external onlyAdmin {
         uint256 claimableAmount = _getVestingClaimableAmount(user);
 
         if (claimableAmount > 0) {
             require(totalSupply() + claimableAmount <= _vestingTypes.allocation, "Max supply exceeded");
             _mint(user, claimableAmount);
-            _projectSupplys[vestingType] = _projectSupplys[vestingType].sub(_vestingList[user].amount.sub(_vestingList[user].claimedAmount));
+            _vestingList[user].claimedAmount = _vestingList[user].claimedAmount.add(claimableAmount);
+    
+            // _projectSupplys = _projectSupplys.sub(_vestingList[user].amount.sub(_vestingList[user].claimedAmount));
         }
     }
 
-    function getVestingByUser(address user) external view returns (VestingInfo memory) {
+    function getVestingInfoByUser(address user) external view returns (VestingInfo memory) {
         return _vestingList[user];   
     }
 
@@ -117,27 +108,28 @@ contract PublicSaleRounds is BEP20, AccessControl, ReentrancyGuard {
 
         uint256 releaseTime = _vestingTypes.startTimeVesting;
 
-        uint256 round1 = _vestingTypes.startTimeVesting.add(31 days);
-        uint256 round2 = _vestingTypes.startTimeVesting.add(62 days);
-
         if(vestingTypeInfo.tgePercent > 0) {
-            if( _vestingTypes.startTimeVesting >= round1 && _vestingTypes.startTimeVesting <= round2) {
-                tgeReleasedAmount = (info.amount * _vestingTypes.tgePercent) / 10**18;
-            } 
-            else if (_vestingTypes.startTimeVesting >= round2) {
-                tgeReleasedAmount = (info.amount * (_vestingTypes.tgePercent.div(2))) / 10**18;
-            }
-
             tgeReleasedAmount = info.amount.mul(_vestingTypes.tgePercent).div(10**18);
         }
 
-        if(block.timestamp > releaseTime) {
-          roundReleasedAmount = info.amount.sub(tgeReleasedAmount); 
+        if(block.timestamp >= releaseTime) {
+            uint256 roundPassed = ((block.timestamp - _vestingTypes.startTimeVesting).mul(30)).add(1);
+            uint256 releaseRounds = 3;
+
+            if(roundPassed >= releaseRounds) {
+                roundReleasedAmount = _vestingTypes.allocation.sub(tgeReleasedAmount); 
+            }
+
+            if (roundPassed >= (releaseRounds -1) && roundPassed < releaseRounds) {
+                roundReleasedAmount = info.amount.mul(_vestingTypes.tgePercent).div(10**18);
+            }
+
+            roundReleasedAmount = info.amount.mul(_vestingTypes.tgePercent).div(10**18);
         }
 
         releasedAmount = tgeReleasedAmount + roundReleasedAmount;
 
-        if (releasedAmount > info.claimedAmount) {
+        if (releasedAmount > info.claimedAmount.sub(tgeReleasedAmount)) {
             claimableAmount = releasedAmount - info.claimedAmount;
         }
     }
@@ -151,9 +143,10 @@ contract PublicSaleRounds is BEP20, AccessControl, ReentrancyGuard {
      * claimPercent describe percentage of claimable token that user want to claim
      * default is 100%
      */
-   function claimVestingToken() external nonReentrant returns (uint256) {
-        uint256 claimableAmount = _getVestingClaimableAmount(_msgSender()).div(10**18);
+   function claimVestingToken(uint256 claimPercent) external nonReentrant returns (uint256) {
+        uint256 claimableAmount = _getVestingClaimableAmount(_msgSender()).mul(claimPercent).div(10**18);
         require(claimableAmount > 0, "Nothing to claim");
+        require(totalSupply() + claimableAmount <= _vestingTypes.allocation, "Max supply exceeded");
 
         _vestingList[_msgSender()].claimedAmount = _vestingList[_msgSender()].claimedAmount.add(claimableAmount);
         _mint(_msgSender(), claimableAmount);

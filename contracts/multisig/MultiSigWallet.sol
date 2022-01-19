@@ -130,7 +130,7 @@ contract MultiSigWallet {
         (bool success, ) = transaction.to.call{value: transaction.value}(
             transaction.data
         );
-        console.log("hihi", success);
+        
         require(success, "tx failed");
 
         emit ExecuteTransaction(msg.sender, _txIndex);

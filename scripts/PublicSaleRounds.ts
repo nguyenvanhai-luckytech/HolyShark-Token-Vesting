@@ -39,9 +39,9 @@ async function main() {
    console.log("Multisig deployed to:", multisig.address);
  
    // We get the contract to deploy
-   const GDCFactory = await ethers.getContractFactory("GDC");
-   const gdc = await GDCFactory.connect(deployer).deploy();
-   console.log("GDC deployed to:", gdc.address);
+   const PublicSaleRoundsFactory = await ethers.getContractFactory("PublicSaleRounds");
+   const publicsalerounds = await PublicSaleRoundsFactory.connect(deployer).deploy(multisig.address, "PublicSaleRounds", "PublicSaleRoundsFactory");
+   console.log("PublicSaleRounds deployed to:", publicsalerounds.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

@@ -11,7 +11,7 @@ contract GDC is BEP20, AccessControl, ReentrancyGuard {
         _;
     }
 
-    constructor(address multiSigAccount) BEP20("GDC", "GDC") {}
+    constructor() BEP20("GDC", "GDC") {}
 
     function mint(address _to, uint256 _amount) public onlyAdmin {
         _mint(_to, _amount);
