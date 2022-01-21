@@ -94,7 +94,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: "https://speedy-nodes-nyc.moralis.io/5ba923ae20cc2c0509504eaa/bsc/testnet/archive",
-        blockNumber: 13692707,
+        // blockNumber: 13692707,
       },
     },
     arbitrum_rinkeby: {
